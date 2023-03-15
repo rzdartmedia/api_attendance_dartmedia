@@ -1,0 +1,30 @@
+{
+  "name": "api-attendance",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/server.js",
+  "scripts": {
+    "start-dev": "nodemon ./src/server",
+    "start": "node ./src/server"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  },
+  "dependencies": {
+    "@hapi/hapi": "^21.1.0",
+    "@hapi/inert": "^7.0.0",
+    "@hapi/jwt": "^3.0.0",
+    "@joi/date": "^2.1.0",
+    "bcrypt": "^5.1.0",
+    "dotenv": "^16.0.3",
+    "joi": "^17.7.0",
+    "mysql2": "^2.3.3",
+    "nanoid": "^3.3.1",
+    "sequelize": "^6.28.0",
+    "sequelize-cli": "^6.6.0",
+    "sprintf-js": "^1.1.2"
+  }
+}
