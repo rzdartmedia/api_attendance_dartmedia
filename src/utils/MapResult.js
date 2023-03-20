@@ -161,6 +161,7 @@ const MapPermissionByIdForUpdate = ({
 
 const MapImage = (image) => {
     const images = [];
+    image = JSON.parse(image);
     image.map((img) => {
         images.push(`${process.env.URL}${img}`)
     });

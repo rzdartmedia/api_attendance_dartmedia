@@ -8,7 +8,7 @@ const Inert = require("@hapi/inert");
 
 // Employee
 const employee = require('./api/employee');
-const EmployeeService = require('./services/mysql/employeeService')
+const EmployeeService = require('./services/mysql/EmployeeService')
 const EmployeeValidator = require('./validator/employee');
 
 // User
