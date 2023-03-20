@@ -11,6 +11,7 @@ class PermissionHandler {
         this.getContentAddPermissionHandler = this.getContentAddPermissionHandler.bind(this);
         this.addPermissionHandler = this.addPermissionHandler.bind(this);
         this.getPermissionsHandler = this.getPermissionsHandler.bind(this);
+        this.getAdminPermissionsHandler = this.getAdminPermissionsHandler.bind(this);
         this.getPermissionByIdHandler = this.getPermissionByIdHandler.bind(this);
         this.getStatusAprovalPermissionHandler = this.getStatusAprovalPermissionHandler.bind(this);
         this.updateStatusApprovalPermissionByIdHandler = this.updateStatusApprovalPermissionByIdHandler.bind(this);
@@ -90,22 +91,48 @@ class PermissionHandler {
             nik
         } = request.auth.credentials;
 
-        const { statusApproval, search } = request.query;
+        const { statusApproval } = request.query;
 
-        let permissions = [];
-        const role = await this._userService.getRole(nik);
-
-        if (role === 'admin') {
-            permissions = await this._service.getPermissionByAdmin(statusApproval, search);
-        } else if (role === 'user') {
-            permissions = await this._service.getPermissionByNik(nik, statusApproval);
-        }
+        const numRows = await this._service.getCountPermissionByNik(nik, statusApproval);
+        const limit = parseInt(request.query.limit) || 10;
+        const page = parseInt(request.query.page) || 1;
+        const totalPages = Math.ceil(numRows / limit);
+        const offset = limit * (page - 1);
+        const permissions = await this._service.getPermissionByNik({ limit, offset, nik, statusApproval });
 
         return {
             status: 'success',
             data: {
                 permissions
-            }
+            },
+            totalData: numRows,
+            totalPages: totalPages
+        }
+
+    }
+
+    async getAdminPermissionsHandler(request) {
+        const {
+            nik
+        } = request.auth.credentials;
+
+        await this._userService.checkRoleAdmin(nik);
+
+        this._validator.validateGetPermissionPayload(request.query);
+        const numRows = await this._service.getCountPermissionByAdmin(request.query);
+        const limit = parseInt(request.query.limit) || 10;
+        const page = parseInt(request.query.page) || 1;
+        const totalPages = Math.ceil(numRows / limit);
+        const offset = limit * (page - 1);
+        const permissions = await this._service.getPermissionByAdmin(limit, offset, request.query);
+
+        return {
+            status: 'success',
+            data: {
+                permissions
+            },
+            totalData: numRows,
+            totalPages: totalPages
         }
     }
 

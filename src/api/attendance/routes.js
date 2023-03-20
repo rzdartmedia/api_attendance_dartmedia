@@ -48,7 +48,23 @@ const routes = (handler) => [
     {
         method: 'GET',
         path: '/attendance/user/latest',
-        handler: handler.getLatestAttendancesByNik,
+        handler: handler.getLatestAttendancesByNikHandler,
+        options: {
+            auth: 'employee_jwt',
+        },
+    },
+    {
+        method: 'GET',
+        path: '/attendance',
+        handler: handler.getAttendancesHander,
+        options: {
+            auth: 'employee_jwt',
+        },
+    },
+    {
+        method: 'GET',
+        path: '/attendance/cms/{id}',
+        handler: handler.getAttendanceByIdHandler,
         options: {
             auth: 'employee_jwt',
         },

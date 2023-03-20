@@ -7,12 +7,14 @@ module.exports = {
     register: async (server, {
         service,
         validator,
-        storageService
+        storageService,
+        userService
     }) => {
         const attandanceHandler = new AttendanceHandler({
             service,
             validator,
-            storageService
+            storageService,
+            userService
         });
 
         server.route(prefix(process.env.PREFIX, routes(attandanceHandler)));

@@ -1,3 +1,6 @@
+const ConvertHours = require("./ConvertHours");
+const formatDateTimeForDB = require("./formatDateTime");
+
 const MapEmployeeByNik = ({
     id_employee,
     name,
@@ -76,6 +79,26 @@ const MapAttendanceByIdAndNik = ({
     status,
 })
 
+const MapPermissions = ({
+    id_permission,
+    category_permission,
+    start_permit_date,
+    end_permit_date,
+    status_approval,
+    name,
+    createdAt,
+    updatedAt,
+}) => ({
+    idPermission: id_permission,
+    categoryPermission: category_permission,
+    startPermitDate: start_permit_date,
+    endPermitDate: end_permit_date,
+    statusApproval: status_approval,
+    name,
+    createdAt: formatDateTimeForDB(createdAt),
+    updatedAt: formatDateTimeForDB(updatedAt),
+})
+
 const MapPermissionById = ({
     id_permission,
     nik,
@@ -89,9 +112,11 @@ const MapPermissionById = ({
     information_approval,
     createdAt,
     updatedAt,
+    name,
 }) => ({
     idPermission: id_permission,
     nik,
+    name,
     categoryPermission: category_permission,
     startPermitDate: start_permit_date,
     endPermitDate: end_permit_date,
@@ -100,8 +125,8 @@ const MapPermissionById = ({
     informationPermission: information_permission,
     statusApproval: status_approval,
     informationApproval: information_approval,
-    createdAt,
-    updatedAt,
+    createdAt: formatDateTimeForDB(createdAt),
+    updatedAt: formatDateTimeForDB(updatedAt),
 });
 
 const MapPermissionByIdForUpdate = ({
@@ -152,10 +177,49 @@ const groupBy = (objects, key) => {
     return data;
 }
 
+const MapGetAttandances = ({
+    id_attendance,
+    name,
+    date,
+    attendance_in,
+    status_attendance_in,
+    attendance_out
+}) => ({
+    idAttendance: id_attendance,
+    name,
+    date,
+    attendanceIn: ConvertHours(attendance_in),
+    statusAttendanceIn: status_attendance_in,
+    attendanceOut: ConvertHours(attendance_out)
+})
+
+const MapAttendanceById = ({
+    id_attendance,
+    date,
+    attendance_in,
+    photo_attendance_in,
+    attendance_out,
+    photo_attendance_out,
+    status,
+}) => ({
+    idAttendance: id_attendance,
+    date,
+    attendanceIn: ConvertHours(attendance_in),
+    photoAttendanceIn: `${process.env.URL}${photo_attendance_in}`,
+    attendanceOut: ConvertHours(attendance_out),
+    photoAttendanceOut: photo_attendance_out
+        ? `${process.env.URL}${photo_attendance_out}`
+        : null,
+    status,
+})
+
 module.exports = {
     MapEmployeeByNik,
     MapAttendanceByIdAndNik,
     MapPermissionById,
     MapPermissionByIdForUpdate,
     groupBy,
+    MapGetAttandances,
+    MapAttendanceById,
+    MapPermissions
 }

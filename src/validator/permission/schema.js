@@ -37,9 +37,19 @@ const PutPermissionRevisedPayloadSchema = Joi.object({
   attachment: Joi.allow(),
 })
 
+const GetEmployeeQuerySchema = Joi.object({
+  limit: Joi.number().allow(),
+  page: Joi.number().allow(),
+  name: Joi.string().max(100).allow(),
+  statusApproval: Joi.string().max(50).allow(),
+  startDateFilter: Joi.date().format('YYYY-MM-DD').utc().allow(),
+  endDateFilter: Joi.date().format('YYYY-MM-DD').utc().allow(),
+});
+
 module.exports = {
   AddPermissionPayloadSchema,
   ImageHeaderSchema,
   PutStatusApprovalPermissionPayloadSchema,
   PutPermissionRevisedPayloadSchema,
+  GetEmployeeQuerySchema,
 };

@@ -2,17 +2,21 @@ class AttendanceHandler {
     constructor({
         service,
         validator,
-        storageService
+        storageService,
+        userService
     }) {
         this._service = service;
         this._validator = validator;
         this._storageService = storageService;
+        this._userService = userService;
 
         this.addAttendanceHandler = this.addAttendanceHandler.bind(this);
         this.getAttendanceByIdAndNikHandler = this.getAttendanceByIdAndNikHandler.bind(this);
         this.putAttendanceHandler = this.putAttendanceHandler.bind(this);
         this.getAttendancesByNikHandler = this.getAttendancesByNikHandler.bind(this);
-        this.getLatestAttendancesByNik = this.getLatestAttendancesByNik.bind(this);
+        this.getLatestAttendancesByNikHandler = this.getLatestAttendancesByNikHandler.bind(this);
+        this.getAttendancesHander = this.getAttendancesHander.bind(this);
+        this.getAttendanceByIdHandler = this.getAttendanceByIdHandler.bind(this);
     }
 
     // Absen masuk
@@ -109,17 +113,24 @@ class AttendanceHandler {
             nik
         } = request.auth.credentials;
 
-        const attendances = await this._service.getAttendancesByNik(nik);
+        const numRows = await this._service.getCountAttendancesByNik(nik);
+        const limit = parseInt(request.query.limit) || 10;
+        const page = parseInt(request.query.page) || 1;
+        const totalPages = Math.ceil(numRows / limit);
+        const offset = limit * (page - 1);
+        const attendances = await this._service.getAttendancesByNik({ limit, offset, nik });
 
         return {
             status: 'success',
             data: {
                 attendances
-            }
+            },
+            totalData: numRows,
+            totalPages: totalPages
         }
     }
 
-    async getLatestAttendancesByNik(request) {
+    async getLatestAttendancesByNikHandler(request) {
         const {
             nik
         } = request.auth.credentials;
@@ -130,6 +141,46 @@ class AttendanceHandler {
             status: 'success',
             data: {
                 attendances: attendances[0]
+            }
+        }
+    }
+
+    async getAttendancesHander(request) {
+        const {
+            nik
+        } = request.auth.credentials;
+
+        await this._userService.checkRoleAdmin(nik);
+        this._validator.validateGetAttendanceQuery(request.query);
+
+        const numRows = await this._service.getCountAttandances(request.query);
+        const limit = parseInt(request.query.limit) || 10;
+        const page = parseInt(request.query.page) || 1;
+        const totalPages = Math.ceil(numRows / limit);
+        const offset = limit * (page - 1);
+        const attendances = await this._service.getAttandances(limit, offset, request.query);
+
+        return {
+            status: 'success',
+            data: {
+                attendances
+            },
+            totalData: numRows,
+            totalPages: totalPages
+        }
+    }
+
+    async getAttendanceByIdHandler(request) {
+        const {
+            nik
+        } = request.auth.credentials;
+
+        await this._userService.checkRoleAdmin(nik);
+        const attendance = await this._service.getAttendanceById(request.params.id);
+        return {
+            status: 'success',
+            data: {
+                attendance
             }
         }
     }

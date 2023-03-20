@@ -132,6 +132,7 @@ const init = async () => {
             service: attendanceService,
             storageService: storageService,
             validator: AttendanceValidator,
+            userService
         },
     },
     {

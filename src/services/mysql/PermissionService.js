@@ -1,7 +1,8 @@
 const db = require('../../../models');
 const { Permission, PermissionRevised } = require('../../../models');
 const InvariantError = require('../../exceptions/InvariantError');
-const { MapPermissionById, groupBy, MapPermissionByIdForUpdate } = require('../../utils/MapResult');
+const { MapPermissionById, groupBy, MapPermissionByIdForUpdate, MapPermissions } = require('../../utils/MapResult');
+const WhereGetPermission = require('../../utils/WhereGetPermission');
 
 class PermissionService {
     constructor() {
@@ -21,6 +22,9 @@ class PermissionService {
 
         let days = 0;
         let currentDate = startDate;
+
+        if (currentDate.getDay() === 0 || currentDate.getDay() === 6) throw new InvariantError('Tidak bisa awal permit di hari sabtu/minggu');
+
         while (currentDate <= endDate) {
             // cek apakah hari saat ini bukan hari Sabtu atau Minggu
             // 0 = minggu, and 6 = sabtu
@@ -29,6 +33,7 @@ class PermissionService {
             }
             currentDate.setDate(currentDate.getDate() + 1);
         }
+
         if (days < 1) throw new InvariantError('End Permit Date tidak boleh lebih kecil');
 
         return days;
@@ -68,10 +73,24 @@ class PermissionService {
         })
     }
 
-    async getPermissionByNik(nik, statusApproval) {
+    async getCountPermissionByNik(nik, statusApproval) {
         let wherePermission = { nik };
         if (statusApproval) wherePermission = { nik, status_approval: statusApproval };
         const data = await Permission.findAll({
+            attributes: [[this._pool.fn('COUNT', this._pool.col('*')), 'count']],
+            where: wherePermission,
+        });
+
+        if (data.length < 1) return 0
+        return data.count;
+    }
+
+    async getPermissionByNik({ limit, offset, nik, statusApproval }) {
+        let wherePermission = { nik };
+        if (statusApproval) wherePermission = { nik, status_approval: statusApproval };
+        const data = await Permission.findAll({
+            limit: limit,
+            offset: offset,
             attributes: ['id_permission', 'category_permission', 'start_permit_date', 'end_permit_date', 'status_approval'],
             where: wherePermission,
             order: [
@@ -79,7 +98,8 @@ class PermissionService {
             ],
         });
 
-        return data;
+        const result = data.map(MapPermissions);
+        return result;
     }
 
     async getPermissionByIdAndNik(nik, id) {
@@ -120,37 +140,54 @@ class PermissionService {
         return result[0];
     }
 
-    async getPermissionByAdmin(statusApproval, search) {
-        let where = `WHERE employees.name LIKE '%${search}%'`;
-        where = statusApproval ? `WHERE status_approval= :statusApproval AND employees.name LIKE '%${search}%' ` : where;
+    async getCountPermissionByAdmin({ name, statusApproval, startDateFilter, endDateFilter }) {
+        const where = WhereGetPermission({ name, statusApproval, startDateFilter, endDateFilter });
+        const [data] = await this._pool.query(`
+            SELECT count(*) AS count FROM permissions
+            JOIN employees ON permissions.nik = employees.nik
+            ${where}
+        `, {
+            replacements: { name, statusApproval, startDateFilter, endDateFilter }
+        });
+
+        if (data.length < 1) return 0;
+        return data[0].count;
+    }
+
+    async getPermissionByAdmin(limit, offset, { name, statusApproval, startDateFilter, endDateFilter }) {
+        const where = WhereGetPermission({ name, statusApproval, startDateFilter, endDateFilter });
 
         const [data] = await this._pool.query(`SELECT id_permission, 
             category_permission, 
             start_permit_date, 
             end_permit_date, 
             status_approval, 
-            employees.name
+            employees.name,
+            permissions.createdAt,
+            permissions.updatedAt
             FROM permissions
             JOIN employees ON permissions.nik = employees.nik
             ${where}
             ORDER BY permissions.createdAt DESC
+            LIMIT :limit OFFSET :offset
             `,
             {
-                replacements: {
-                    statusApproval,
-                    search
-                }
+                replacements: { limit, offset, name, statusApproval, startDateFilter, endDateFilter }
             });
 
-        return data;
+        const result = data.map(MapPermissions);
+        return result;
     }
 
     async getPermissionByIdByAdmin(id) {
         const [data] = await this._pool.query(`
-            SELECT * FROM permissions WHERE id_permission = :id
+            SELECT permissions.*, name FROM permissions 
+            JOIN employees ON 
+            employees.nik = permissions.nik
+            WHERE id_permission = :id
             UNION
-            SELECT id_permission, 
-            nik, 
+            SELECT id_permission,
+            permissions_revised.nik,
             category_permission,
             start_permit_date,
             end_permit_date,
@@ -159,9 +196,12 @@ class PermissionService {
             information_permission,
             status_approval,
             information_approval,
-            createdAt,
-            updatedAt  
-            FROM permissions_revised WHERE id_permission = :id
+            permissions_revised.createdAt,
+            permissions_revised.updatedAt,
+            name
+            FROM permissions_revised
+            JOIN employees ON employees.nik = permissions_revised.nik
+            WHERE id_permission = :id
             ORDER BY createdAt`,
             {
                 replacements: {

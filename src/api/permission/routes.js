@@ -32,6 +32,14 @@ const routes = (handler) => [
     },
     {
         method: 'GET',
+        path: '/permission/admin',
+        handler: handler.getAdminPermissionsHandler,
+        options: {
+            auth: 'employee_jwt',
+        },
+    },
+    {
+        method: 'GET',
         path: '/permission/{id}',
         handler: handler.getPermissionByIdHandler,
         options: {

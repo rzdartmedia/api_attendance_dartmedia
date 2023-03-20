@@ -45,6 +45,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
+    await queryInterface.dropTable('attendances');
     await queryInterface.bulkDelete('users', { id_user: 'user-000001' });
     await queryInterface.bulkDelete('employees', { id_employee: 'DMA-admin001' });
   }

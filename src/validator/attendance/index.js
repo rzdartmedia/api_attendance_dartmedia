@@ -1,6 +1,7 @@
 const {
   AddAttendancePayloadSchema,
-  ImageHeaderSchema
+  ImageHeaderSchema,
+  GetAttendanceQuerySchema
 } = require("./schema");
 const InvariantError = require("../../exceptions/InvariantError"); // custom message error and code error
 
@@ -18,6 +19,12 @@ const AttendanceValidator = {
   validateImageHeaders: (headers) => {
     const validationResult = ImageHeaderSchema.validate(headers);
 
+    if (validationResult.error) {
+      throw new InvariantError(validationResult.error.message);
+    }
+  },
+  validateGetAttendanceQuery: (query) => {
+    const validationResult = GetAttendanceQuerySchema.validate(query)
     if (validationResult.error) {
       throw new InvariantError(validationResult.error.message);
     }

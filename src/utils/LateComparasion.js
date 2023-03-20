@@ -14,4 +14,4 @@ function LateComparassion() {
     }
 };
 
-module.exports = LateComparassion();
+module.exports = LateComparassion;

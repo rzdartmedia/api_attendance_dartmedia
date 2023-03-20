@@ -2,11 +2,12 @@ const db = require("../../../models");
 const ClientError = require("../../exceptions/ClientError");
 const NotFoundError = require("../../exceptions/NotFoundError");
 const {
-    MapAttendanceByIdAndNik
+    MapAttendanceByIdAndNik, MapGetAttandances, MapAttendanceById
 } = require("../../utils/MapResult");
 const { Attendance } = require('../../../models');
 const InvariantError = require("../../exceptions/InvariantError");
 const LateComparasion = require("../../utils/LateComparasion");
+const WhereGetAttendance = require("../../utils/WhereGetAttendance");
 
 class AttendanceService {
     constructor() {
@@ -108,18 +109,90 @@ class AttendanceService {
         if (attendance.length > 0) throw new ClientError('Gagal absen karena hanya 1 hari 1x absen');
     }
 
-    async getAttendancesByNik(nik) {
+    async getCountAttendancesByNik(nik) {
         const [attendances] = await this._pool.query(`
-            SELECT id_attendance AS idAttendance, date, attendance_in AS attendanceIn,
-            attendance_out AS attendanceOut, status
-            FROM attendances WHERE nik = :nik ORDER BY date DESC
+            SELECT count(*) AS count
+            FROM attendances WHERE nik = :nik
         `, {
             replacements: {
                 nik
             }
         });
 
+        if (attendances.length < 1) return 0;
+        return attendances[0].count;
+    }
+
+    async getAttendancesByNik({ limit, offset, nik }) {
+        const [attendances] = await this._pool.query(`
+            SELECT id_attendance AS idAttendance, date, attendance_in AS attendanceIn,
+            attendance_out AS attendanceOut, status
+            FROM attendances WHERE nik = :nik ORDER BY date DESC
+            LIMIT :limit OFFSET :offset
+        `, {
+            replacements: {
+                nik,
+                limit,
+                offset
+            }
+        });
+
         return attendances;
+    }
+
+    async getCountAttandances({ name, statusAttendanceIn, startDateFilter, endDateFilter }) {
+        const where = WhereGetAttendance({ name, statusAttendanceIn, startDateFilter, endDateFilter });
+        const [data] = await this._pool.query(`
+            SELECT count(*) AS count FROM attendances
+            JOIN employees ON
+            employees.nik = attendances.nik
+            ${where}
+        `, {
+            replacements: {
+                statusAttendanceIn, startDateFilter, endDateFilter
+            }
+        });
+
+        if (data.length < 1) return 0;
+        return data[0].count;
+    }
+
+    async getAttandances(limit, offset, { name, statusAttendanceIn, startDateFilter, endDateFilter }) {
+        const where = WhereGetAttendance({ name, statusAttendanceIn, startDateFilter, endDateFilter });
+
+        const [data] = await this._pool.query(`
+            SELECT id_attendance, name,
+            date, attendance_in, 
+            status_attendance_in, attendance_out
+            FROM attendances
+            JOIN employees ON
+            employees.nik = attendances.nik
+            ${where}
+            ORDER BY attendances.createdAt DESC
+            LIMIT :limit OFFSET :offset
+        `, {
+            replacements: {
+                limit,
+                offset,
+                statusAttendanceIn, startDateFilter, endDateFilter
+            }
+        });
+
+        const result = data.map(MapGetAttandances)
+        return result;
+    }
+
+    async getAttendanceById(id) {
+        const data = await Attendance.findAll({
+            where: {
+                id_attendance: id
+            },
+            attributes: { exclude: ['createdAt'] },
+        });
+
+        if (data.length < 1) throw new NotFoundError('Data user is not found')
+        const result = data.map(MapAttendanceById);
+        return result[0];
     }
 }
 

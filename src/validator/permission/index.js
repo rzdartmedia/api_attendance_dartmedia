@@ -3,6 +3,7 @@ const {
   ImageHeaderSchema,
   PutStatusApprovalPermissionPayloadSchema,
   PutPermissionRevisedPayloadSchema,
+  GetEmployeeQuerySchema,
 } = require("./schema");
 const InvariantError = require("../../exceptions/InvariantError"); // custom message error and code error
 
@@ -38,6 +39,15 @@ const PermissionValidator = {
   validatePutApprovalRevisedPayload: (payload) => {
     // check type data 
     const validationResult = PutPermissionRevisedPayloadSchema.validate(payload);
+
+    // if validation error throw error
+    if (validationResult.error) {
+      throw new InvariantError(validationResult.error.message);
+    }
+  },
+  validateGetPermissionPayload: (query) => {
+    // check type data 
+    const validationResult = GetEmployeeQuerySchema.validate(query);
 
     // if validation error throw error
     if (validationResult.error) {

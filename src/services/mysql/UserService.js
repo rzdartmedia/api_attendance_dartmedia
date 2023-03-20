@@ -6,6 +6,8 @@ const InvariantError = require("../../exceptions/InvariantError");
 const AuthenticationError = require("../../exceptions/AuthenticationError");
 const db = require("../../../models");
 const { User } = require('../../../models');
+const NotFoundError = require("../../exceptions/NotFoundError");
+const AuthorizationError = require("../../exceptions/AuthorizationError");
 
 class UserService {
     constructor() {
@@ -69,6 +71,18 @@ class UserService {
             });
 
         return data[0].role;
+    }
+
+    async checkRoleAdmin(nik) {
+        const [data] = await this._pool.query('SELECT role FROM users WHERE nik = :nik',
+            {
+                replacements: {
+                    nik
+                }
+            });
+
+        if (data.length < 1) throw new NotFoundError('User is not found');
+        if (data[0].role !== 'admin') throw new AuthorizationError('Are you not entitied')
     }
 }
 

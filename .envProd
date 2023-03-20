@@ -1,0 +1,24 @@
+# Server Configuration
+HOST=
+PORT=
+TZ=Asia/Jakarta
+
+# Config Database Postgres
+DBHOST=
+DBUSER=
+DBPASSWORD=
+DBNAME=
+DBPORT=
+DBDRIVER=
+
+# authentications
+REFRESH_TOKEN_KEY=
+ACCESS_TOKEN_KEY=
+
+# 30 menit
+ACCESS_TOKEN_AGE=
+
+URL=
+URLIMAGES=
+
+PREFIX=/api-attendance
