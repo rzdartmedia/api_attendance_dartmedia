@@ -1,3 +1,5 @@
 /node_modules
 /src/public/images/
+/src/public/default/
 package-lock.json
+.env

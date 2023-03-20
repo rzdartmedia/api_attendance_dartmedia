@@ -67,6 +67,7 @@ const MapAttendanceByIdAndNik = ({
     attendance_out,
     photo_attendance_out,
     status,
+    status_attendance_in,
 }) => ({
     idAttendance: id_attendance,
     date,
@@ -77,6 +78,7 @@ const MapAttendanceByIdAndNik = ({
         ? `${process.env.URL}${photo_attendance_out}`
         : null,
     status,
+    statusAttendanceIn: status_attendance_in
 })
 
 const MapPermissions = ({
@@ -201,6 +203,7 @@ const MapAttendanceById = ({
     attendance_out,
     photo_attendance_out,
     status,
+    status_attendance_in
 }) => ({
     idAttendance: id_attendance,
     date,
@@ -211,6 +214,7 @@ const MapAttendanceById = ({
         ? `${process.env.URL}${photo_attendance_out}`
         : null,
     status,
+    statusAttendanceIn: status_attendance_in
 })
 
 module.exports = {

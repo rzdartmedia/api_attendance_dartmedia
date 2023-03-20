@@ -126,7 +126,8 @@ class AttendanceService {
     async getAttendancesByNik({ limit, offset, nik }) {
         const [attendances] = await this._pool.query(`
             SELECT id_attendance AS idAttendance, date, attendance_in AS attendanceIn,
-            attendance_out AS attendanceOut, status
+            attendance_out AS attendanceOut, status,
+            status_attendance_in AS statusAttendanceIn
             FROM attendances WHERE nik = :nik ORDER BY date DESC
             LIMIT :limit OFFSET :offset
         `, {

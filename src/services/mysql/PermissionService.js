@@ -82,7 +82,7 @@ class PermissionService {
         });
 
         if (data.length < 1) return 0
-        return data.count;
+        return data[0].dataValues.count;
     }
 
     async getPermissionByNik({ limit, offset, nik, statusApproval }) {
