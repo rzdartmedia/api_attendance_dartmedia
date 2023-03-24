@@ -193,7 +193,7 @@ const MapGetAttandances = ({
     date,
     attendanceIn: ConvertHours(attendance_in),
     statusAttendanceIn: status_attendance_in,
-    attendanceOut: ConvertHours(attendance_out)
+    attendanceOut: attendance_out ? formatDateTimeForDB(attendance_out) : null
 })
 
 const MapAttendanceById = ({
@@ -210,7 +210,7 @@ const MapAttendanceById = ({
     date,
     attendanceIn: ConvertHours(attendance_in),
     photoAttendanceIn: `${process.env.URL}${photo_attendance_in}`,
-    attendanceOut: ConvertHours(attendance_out),
+    attendanceOut: attendance_out ? formatDateTimeForDB(attendance_out) : null,
     photoAttendanceOut: photo_attendance_out
         ? `${process.env.URL}${photo_attendance_out}`
         : null,
