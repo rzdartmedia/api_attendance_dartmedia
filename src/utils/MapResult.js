@@ -1,4 +1,5 @@
 const ConvertHours = require("./ConvertHours");
+const capitalizeFirstLetter = require("./capitalizeFirstLetter");
 const formatDateTimeForDB = require("./formatDateTime");
 
 const MapEmployeeByNik = ({
@@ -161,7 +162,6 @@ const MapPermissionByIdForUpdate = ({
 
 const MapImage = (image) => {
     const images = [];
-    image = JSON.parse(image);
     image.map((img) => {
         images.push(`${process.env.URL}${img}`)
     });
@@ -218,6 +218,79 @@ const MapAttendanceById = ({
     statusAttendanceIn: status_attendance_in
 })
 
+const MapAttendanceByMonth = (data) => {
+    const transformedData = data.reduce((acc, curr) => {
+        const { bulan, tahun, name, jumlah_data } = curr;
+        const month = `${bulan}`;
+
+        if (!acc[name]) {
+            acc[name] = { name: capitalizeFirstLetter(name), months: {} };
+        }
+
+        acc[name].months[month] = jumlah_data;
+
+        return acc;
+    }, {});
+
+    return Object.values(transformedData);
+}
+
+const MapAttendanceByMonth2 = (attendances, startMonth, endMonth) => {
+    const monthsOfYear = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+    ];
+
+    const currentDate = new Date();
+    const dataStartMonth = startMonth ? startMonth - 1 : currentDate.getMonth();
+    const dataEndMonth = endMonth || currentDate.getMonth() + 1;
+
+    const months = monthsOfYear.slice(dataStartMonth, dataEndMonth)
+
+    const transformedData = attendances.map(attendance => {
+        const transformedMonths = {};
+
+        months.forEach(month => {
+            if (attendance.months[month]) {
+                transformedMonths[month] = attendance.months[month];
+            } else {
+                transformedMonths[month] = 0;
+            }
+        });
+
+        return {
+            name: attendance.name,
+            months: transformedMonths
+        };
+    });
+
+    return transformedData;
+}
+
+const MapAttendanceByMonthForTable = ({
+    bulan,
+    tahun,
+    name,
+    status_attendance_in,
+    jumlah_data
+}) => ({
+    bulan,
+    tahun,
+    name,
+    status_attendance_in,
+    jumlah_data
+})
+
 module.exports = {
     MapEmployeeByNik,
     MapAttendanceByIdAndNik,
@@ -226,5 +299,8 @@ module.exports = {
     groupBy,
     MapGetAttandances,
     MapAttendanceById,
-    MapPermissions
+    MapPermissions,
+    MapAttendanceByMonth,
+    MapAttendanceByMonthForTable,
+    MapAttendanceByMonth2
 }

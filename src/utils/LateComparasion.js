@@ -8,7 +8,7 @@ function LateComparassion() {
 
     // Membandingkan waktu saat ini dengan waktu absen
     if (currentTime.getTime() <= absenTime.getTime()) {
-        return 'not late'
+        return 'on time'
     } else {
         return 'late'
     }

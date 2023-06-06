@@ -69,6 +69,22 @@ const routes = (handler) => [
             auth: 'employee_jwt',
         },
     },
+    {
+        method: 'GET',
+        path: '/attendance/cms/all/month',
+        handler: handler.getAttendanceByMonthHandler,
+        options: {
+            auth: 'employee_jwt',
+        },
+    },
+    {
+        method: 'GET',
+        path: '/attendance/cms/all/month/table',
+        handler: handler.getAttendanceByMontForTablehHandler,
+        options: {
+            auth: 'employee_jwt',
+        },
+    },
 ];
 
 module.exports = routes;

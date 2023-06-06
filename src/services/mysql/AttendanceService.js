@@ -2,12 +2,13 @@ const db = require("../../../models");
 const ClientError = require("../../exceptions/ClientError");
 const NotFoundError = require("../../exceptions/NotFoundError");
 const {
-    MapAttendanceByIdAndNik, MapGetAttandances, MapAttendanceById
+    MapAttendanceByIdAndNik, MapGetAttandances, MapAttendanceById, MapAttendanceByMonth, MapAttendanceByMonthForTable, MapAttendanceByMonth2
 } = require("../../utils/MapResult");
 const { Attendance } = require('../../../models');
 const InvariantError = require("../../exceptions/InvariantError");
 const LateComparasion = require("../../utils/LateComparasion");
 const WhereGetAttendance = require("../../utils/WhereGetAttendance");
+const { where } = require("sequelize");
 
 class AttendanceService {
     constructor() {
@@ -194,6 +195,118 @@ class AttendanceService {
         if (data.length < 1) throw new NotFoundError('Data user is not found')
         const result = data.map(MapAttendanceById);
         return result[0];
+    }
+
+    async getDataAttendanceByMonth(startMonth, endMonth, statusAttendanceIn, search) {
+        const queryStartMonth = startMonth ? ":startMonth" : "MONTH(CURDATE())";
+        const queryEndMonth = endMonth ? ":endMonth" : "MONTH(CURDATE())";
+        const whereStatus = statusAttendanceIn ? "AND status_attendance_in = :statusAttendanceIn" : "";
+        search = search ? `%${search}%` : '%%';
+
+        const [data] = await this._pool.query(`
+            SELECT
+            DATE_FORMAT(date, '%M') AS bulan,
+            DATE_FORMAT(date, '%Y') AS tahun,
+            name,
+            COUNT(*) AS jumlah_data
+            FROM
+            attendances
+            JOIN employees ON employees.nik = attendances.nik
+            WHERE
+            MONTH(date) BETWEEN ${queryStartMonth} AND ${queryEndMonth} 
+            AND YEAR(date) = YEAR(CURDATE())
+            AND employees.name LIKE :search
+            ${whereStatus}
+            GROUP BY
+            bulan, tahun, name
+        `, {
+            replacements: {
+                startMonth,
+                endMonth,
+                statusAttendanceIn,
+                search,
+            }
+        });
+
+        const result = MapAttendanceByMonth(data)
+        const result2 = MapAttendanceByMonth2(result, startMonth, endMonth)
+        return result2;
+    }
+
+    async getCountDataAttendanceByMonthForTable(startMonth, endMonth, statusAttendanceIn, search) {
+        const queryStartMonth = startMonth ? ":startMonth" : "MONTH(CURDATE())";
+        const queryEndMonth = endMonth ? ":endMonth" : "MONTH(CURDATE())";
+        const whereStatus = statusAttendanceIn ? "AND status_attendance_in = :statusAttendanceIn" : "";
+        search = search ? `%${search}%` : '%%';
+
+        const [data] = await this._pool.query(`
+            SELECT count(*) AS total_data FROM
+            (SELECT
+            DATE_FORMAT(date, '%M') AS bulan,
+            DATE_FORMAT(date, '%Y') AS tahun,
+            name,
+            attendances.status_attendance_in,
+            COUNT(*) AS jumlah_data
+            FROM
+            attendances
+            JOIN employees ON employees.nik = attendances.nik
+            WHERE
+            MONTH(date) BETWEEN ${queryStartMonth} AND ${queryEndMonth} 
+            AND YEAR(date) = YEAR(CURDATE())
+            AND employees.name LIKE :search
+            ${whereStatus}
+            GROUP BY
+            bulan, tahun, name, status_attendance_in) AS attendances
+        `, {
+            replacements: {
+                startMonth,
+                endMonth,
+                statusAttendanceIn,
+                search,
+            }
+        });
+
+        return data[0].total_data;
+    }
+
+    async getDataAttendanceByMonthForTable(startMonth, endMonth, statusAttendanceIn, search, { limit, offset }) {
+        const queryStartMonth = startMonth ? ":startMonth" : "MONTH(CURDATE())";
+        const queryEndMonth = endMonth ? ":endMonth" : "MONTH(CURDATE())";
+        const whereStatus = statusAttendanceIn ? "AND status_attendance_in = :statusAttendanceIn" : "";
+        search = search ? `%${search}%` : '%%';
+
+        const [data] = await this._pool.query(`
+            SELECT
+            DATE_FORMAT(date, '%M') AS bulan,
+            DATE_FORMAT(date, '%Y') AS tahun,
+            name,
+            attendances.status_attendance_in,
+            COUNT(*) AS jumlah_data
+            FROM
+            attendances
+            JOIN employees ON employees.nik = attendances.nik
+            WHERE
+            MONTH(date) BETWEEN ${queryStartMonth} AND ${queryEndMonth} 
+            AND YEAR(date) = YEAR(CURDATE())
+            AND employees.name LIKE :search
+            ${whereStatus}
+            GROUP BY
+            bulan, tahun, name, status_attendance_in
+            ORDER BY name ASC
+            LIMIT :limit OFFSET :offset
+        `, {
+            replacements: {
+                startMonth,
+                endMonth,
+                statusAttendanceIn,
+                search,
+                limit,
+                offset,
+            }
+        });
+
+        const result = data.map(MapAttendanceByMonthForTable);
+        return result;
     }
 }
 
