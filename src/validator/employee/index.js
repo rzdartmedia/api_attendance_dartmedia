@@ -1,6 +1,7 @@
 const InvariantError = require("../../exceptions/InvariantError");
 const {
   AddEmployeePayloadSchema,
+  putStatusEmployeeByNikPayloadSchema,
   ImageHeaderSchema
 } = require("./schema");
 
@@ -9,6 +10,15 @@ const EmployeeValidator = {
   validateAddEmployeePayload: (payload) => {
     // check type data 
     const validationResult = AddEmployeePayloadSchema.validate(payload);
+
+    // if validation error throw error
+    if (validationResult.error) {
+      throw new InvariantError(validationResult.error.message);
+    }
+  },
+  validatePutStatusEmployeeByNikPayloadPayload: (payload) => {
+    // check type data 
+    const validationResult = putStatusEmployeeByNikPayloadSchema.validate(payload);
 
     // if validation error throw error
     if (validationResult.error) {

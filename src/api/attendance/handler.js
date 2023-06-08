@@ -19,6 +19,7 @@ class AttendanceHandler {
         this.getAttendanceByIdHandler = this.getAttendanceByIdHandler.bind(this);
         this.getAttendanceByMonthHandler = this.getAttendanceByMonthHandler.bind(this);
         this.getAttendanceByMontForTablehHandler = this.getAttendanceByMontForTablehHandler.bind(this);
+        this.getReportAttendanceByMonthHandler = this.getReportAttendanceByMonthHandler.bind(this);
     }
 
     // Absen masuk
@@ -206,9 +207,9 @@ class AttendanceHandler {
         const {
             nik
         } = request.auth.credentials;
-        const { startMonth, endMonth, statusAttendanceIn, search } = request.query;
-
         await this._userService.checkRoleAdmin(nik);
+
+        const { startMonth, endMonth, statusAttendanceIn, search } = request.query;
 
         const numRows = await this._service.getCountDataAttendanceByMonthForTable(startMonth, endMonth, statusAttendanceIn, search);
         const limit = parseInt(request.query.limit) || 10;
@@ -216,6 +217,31 @@ class AttendanceHandler {
         const totalPages = Math.ceil(numRows / limit);
         const offset = limit * (page - 1);
         const attendances = await this._service.getDataAttendanceByMonthForTable(startMonth, endMonth, statusAttendanceIn, search, { limit, offset });
+
+        return {
+            status: 'success',
+            data: {
+                attendances
+            },
+            totalData: numRows,
+            totalPages: totalPages
+        }
+    }
+
+    async getReportAttendanceByMonthHandler(request) {
+        const {
+            nik
+        } = request.auth.credentials;
+        await this._userService.checkRoleAdmin(nik);
+
+        const month = parseInt(request.query.month);
+        const year = parseInt(request.query.year);
+        const numRows = await this._service.getCountReportAttendanceByMonth(month, year);
+        const limit = parseInt(request.query.limit) || 10;
+        const page = parseInt(request.query.page) || 1;
+        const totalPages = Math.ceil(numRows / limit);
+        const offset = limit * (page - 1);
+        const attendances = await this._service.getReportAttendanceByMonth({ limit, offset }, month, year);
 
         return {
             status: 'success',

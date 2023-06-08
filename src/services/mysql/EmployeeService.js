@@ -6,6 +6,7 @@ const {
     MapEmployeeByNik
 } = require("../../utils/MapResult");
 const { Employee } = require('../../../models');
+const StringToLikeSearch = require("../../utils/StringToLikeSearch");
 
 class EmployeeService {
     constructor() {
@@ -121,6 +122,60 @@ class EmployeeService {
 
         const result = employee.map(MapEmployeeByNik);
         return result[0];
+    }
+
+    async getCountEmployee(name) {
+        name = StringToLikeSearch(name);
+        const [result] = await this._pool.query(`
+            SELECT count(*) AS count FROM employees
+            WHERE name LIKE :name
+        `, {
+            replacements: {
+                name
+            }
+        });
+
+        if (result.length < 1) return 0;
+        return result[0].count;
+    }
+
+    async getEmployeesForCms({ offset, limit, name }) {
+        name = StringToLikeSearch(name);
+        const [result] = await this._pool.query(`
+            SELECT status_employee, nik, name, position, division, no_hp, email_employee, email_personal,
+            gender, blood, religion FROM employees
+            WHERE name LIKE :name
+            ORDER BY createdAt DESC
+            LIMIT :limit OFFSET :offset
+        `, {
+            replacements: {
+                offset,
+                limit,
+                name
+            }
+        });
+
+        return result;
+    }
+
+    async updateStatusEmployeeByNik(nik, status) {
+        const [resultUser] = await this._pool.query(`
+            UPDATE users SET status = :status WHERE nik = :nik
+        `, {
+            replacements: {
+                nik, status
+            }
+        });
+
+        const [resultEmployee] = await this._pool.query(`
+            UPDATE employees SET status_employee = :status WHERE nik = :nik
+        `, {
+            replacements: {
+                nik, status
+            }
+        });
+
+        console.log(resultEmployee);
     }
 }
 

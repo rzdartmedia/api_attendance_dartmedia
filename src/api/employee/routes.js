@@ -1,4 +1,5 @@
-const routes = (handler) => [{
+const routes = (handler) => [
+    {
         method: 'POST',
         path: '/employee',
         handler: handler.addEmployeeHandler,
@@ -15,7 +16,31 @@ const routes = (handler) => [{
     {
         method: 'GET',
         path: '/employee/user',
-        handler: handler.getEmployeeByNikHandler,
+        handler: handler.getEmployeeByTokenHandler,
+        options: {
+            auth: "employee_jwt",
+        },
+    },
+    {
+        method: 'GET',
+        path: '/employee',
+        handler: handler.getEmployeeForCmsHandler,
+        options: {
+            auth: "employee_jwt",
+        },
+    },
+    {
+        method: 'GET',
+        path: '/employee/{nik}',
+        handler: handler.getEmployeeByIdForCmsHandler,
+        options: {
+            auth: "employee_jwt",
+        },
+    },
+    {
+        method: 'PUT',
+        path: '/employee/{nik}',
+        handler: handler.updateStatusEmployeeByNikHandler,
         options: {
             auth: "employee_jwt",
         },

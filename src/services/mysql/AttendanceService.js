@@ -2,7 +2,7 @@ const db = require("../../../models");
 const ClientError = require("../../exceptions/ClientError");
 const NotFoundError = require("../../exceptions/NotFoundError");
 const {
-    MapAttendanceByIdAndNik, MapGetAttandances, MapAttendanceById, MapAttendanceByMonth, MapAttendanceByMonthForTable, MapAttendanceByMonth2
+    MapAttendanceByIdAndNik, MapGetAttandances, MapAttendanceById, MapAttendanceByMonth, MapAttendanceByMonthForTable, MapAttendanceByMonth2, MapAttendanceDayByMonth
 } = require("../../utils/MapResult");
 const { Attendance } = require('../../../models');
 const InvariantError = require("../../exceptions/InvariantError");
@@ -306,6 +306,51 @@ class AttendanceService {
         });
 
         const result = data.map(MapAttendanceByMonthForTable);
+        return result;
+    }
+
+    async getCountReportAttendanceByMonth(month, year) {
+        const dataMonth = month || new Date().getMonth() + 1;
+        const dataYear = year || new Date().getFullYear();
+
+        const [data] = await this._pool.query(
+            `SELECT count(*) AS count FROM (SELECT name FROM attendances
+            JOIN employees ON employees.nik = attendances.nik
+            WHERE MONTH(date) = :dataMonth AND YEAR(date) = :dataYear
+            GROUP BY name) AS count
+            `, {
+            replacements: {
+                dataMonth,
+                dataYear
+            }
+        });
+
+        if (data.length < 1) return 0;
+
+        return data[0].count;
+    }
+
+    async getReportAttendanceByMonth({ limit, offset }, month, year) {
+        const dataMonth = month || new Date().getMonth() + 1;
+        const dataYear = year || new Date().getFullYear();
+
+        const [data] = await this._pool.query(
+            `SELECT name, date FROM attendances
+            JOIN employees ON employees.nik = attendances.nik
+            WHERE MONTH(date) = :dataMonth AND YEAR(date) = :dataYear
+            ORDER BY name
+            LIMIT :limit OFFSET :offset
+            `, {
+            replacements: {
+                limit,
+                offset,
+                dataMonth,
+                dataYear
+            }
+        }
+        );
+
+        const result = MapAttendanceDayByMonth(data, dataMonth, dataYear)
         return result;
     }
 }

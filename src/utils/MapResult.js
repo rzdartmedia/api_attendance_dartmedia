@@ -1,4 +1,5 @@
 const ConvertHours = require("./ConvertHours");
+const GetDaysInMonth = require("./GetDaysInMonth");
 const capitalizeFirstLetter = require("./capitalizeFirstLetter");
 const formatDateTimeForDB = require("./formatDateTime");
 
@@ -291,6 +292,50 @@ const MapAttendanceByMonthForTable = ({
     jumlah_data
 })
 
+const MapAttendanceDayByMonth = (input, month, year) => {
+    const countDaysInMonth = GetDaysInMonth(month, year)
+    // Mengubah format tanggal dari string ke objek Date
+    const formattedData = input.map(item => ({
+        name: item.name,
+        date: new Date(item.date)
+    }));
+
+    // Mengurutkan data berdasarkan tanggal
+    formattedData.sort((a, b) => a.date - b.date);
+
+    // Membuat objek data yang diinginkan dengan jumlah kehadiran per tanggal
+    const data = formattedData.reduce((acc, curr) => {
+        const day = curr.date.getDate();
+        const name = curr.name;
+
+        if (!acc[name]) {
+            acc[name] = {
+                name: name,
+                attendance: {},
+                totalAttendance: 0
+            };
+        }
+
+        acc[name].attendance[day] = (acc[name].attendance[day] || 0) + 1;
+        acc[name].totalAttendance++;
+
+        return acc;
+    }, {});
+
+    // Mengisi tanggal yang tidak hadir dengan nilai 0
+    Object.values(data).forEach(item => {
+        for (let i = 1; i <= countDaysInMonth; i++) {
+            if (!item.attendance[i]) {
+                item.attendance[i] = 0;
+            }
+        }
+    });
+
+    // Mengubah format data menjadi array
+    const result = Object.values(data);
+    return result;
+}
+
 module.exports = {
     MapEmployeeByNik,
     MapAttendanceByIdAndNik,
@@ -302,5 +347,6 @@ module.exports = {
     MapPermissions,
     MapAttendanceByMonth,
     MapAttendanceByMonthForTable,
-    MapAttendanceByMonth2
+    MapAttendanceByMonth2,
+    MapAttendanceDayByMonth
 }

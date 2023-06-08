@@ -32,6 +32,10 @@ const AddEmployeePayloadSchema = Joi.object({
   workLocation: Joi.string().required(),
 });
 
+const putStatusEmployeeByNikPayloadSchema = Joi.object({
+  status: Joi.boolean().required()
+})
+
 const ImageHeaderSchema = Joi.object({
   "content-type": Joi.string()
     .valid(
@@ -47,5 +51,6 @@ const ImageHeaderSchema = Joi.object({
 
 module.exports = {
   AddEmployeePayloadSchema,
+  putStatusEmployeeByNikPayloadSchema,
   ImageHeaderSchema
 };
