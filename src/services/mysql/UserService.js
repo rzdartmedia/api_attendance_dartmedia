@@ -30,19 +30,20 @@ class UserService {
     }
 
     async verifyUserCredential({
-        nik,
+        noHp,
         password
     }) {
         const [user] = await this._pool.query(`
-            SELECT id_user, nik AS nik_employee, password AS hashed_password FROM users
-            WHERE nik = :nik LIMIT 1 
+            SELECT id_user, employees.nik AS nik_employee, password AS hashed_password FROM users
+            JOIN employees ON employees.nik = users.nik
+            WHERE no_hp = :noHp LIMIT 1 
         `, {
             replacements: {
-                nik
+                noHp
             }
         });
 
-        if (user.length < 1) throw new InvariantError('NIK tidak terdaftar');
+        if (user.length < 1) throw new InvariantError('No Handphone tidak terdaftar');
 
         const {
             id_user,
