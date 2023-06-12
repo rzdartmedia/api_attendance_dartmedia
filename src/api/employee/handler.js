@@ -1,3 +1,5 @@
+const InvariantError = require("../../exceptions/InvariantError");
+
 class EmployeeHandler {
     constructor({
         service,
@@ -16,6 +18,8 @@ class EmployeeHandler {
         this.getEmployeeForCmsHandler = this.getEmployeeForCmsHandler.bind(this);
         this.getEmployeeByIdForCmsHandler = this.getEmployeeByIdForCmsHandler.bind(this);
         this.updateStatusEmployeeByNikHandler = this.updateStatusEmployeeByNikHandler.bind(this);
+        this.updateEmployeeByTokenHandler = this.updateEmployeeByTokenHandler.bind(this);
+        this.updateNPWPEmployeeByTokenHandler = this.updateNPWPEmployeeByTokenHandler.bind(this);
     }
 
     async addEmployeeHandler(request) {
@@ -156,14 +160,66 @@ class EmployeeHandler {
 
         await this._userService.checkRoleAdmin(nik);
 
-        this._validator.validatePutStatusEmployeeByNikPayloadPayload(request.payload);
+        this._validator.validatePutStatusEmployeeByNikPayload(request.payload);
+
+        if (nik == request.params.nik) throw new InvariantError('Cannot disable your own')
 
         const { status } = request.payload;
         await this._service.updateStatusEmployeeByNik(request.params.nik, status);
 
+        await this._userService.deleteAuthenticationForUpdatePassword(request.params.nik);
+
         return {
             status: 'success',
             message: 'Berhasil update status'
+        }
+    }
+
+    async updateEmployeeByTokenHandler(request) {
+        this._validator.validateUpdateEmployeeByNikPayload(request.payload);
+        const {
+            nik
+        } = request.auth.credentials;
+        request.payload.nik = nik
+
+        await this._service.updateDataEmployeeByNik(request.payload);
+
+        return {
+            status: 'success',
+            message: 'Berhasil update data'
+        }
+    }
+
+    async updateNPWPEmployeeByTokenHandler(request) {
+        this._validator.validateUpdateNPWPEmployeePayload(request.payload);
+
+        const {
+            nik
+        } = request.auth.credentials;
+        request.payload.nik = nik
+
+        this._service.checkHaveEmployeeByNik(nik);
+
+        const { photoNpwp } = request.payload;
+
+        const namePhotoNpwp = await this._storageService.writeFile(
+            photoNpwp,
+            photoNpwp.hapi,
+            'images/npwp'
+        );
+        request.payload.photoNpwp = `/images/npwp/${namePhotoNpwp}`;
+
+        const photoNpwpOld = await this._service.getImageOneForUpdate(nik, 'photo_npwp');
+        if (photoNpwpOld) {
+            const splitPhotoNpwpOld = photoNpwpOld.split('/');
+            this._storageService.deleteFile(splitPhotoNpwpOld[splitPhotoNpwpOld.length - 1], 'images/npwp')
+        }
+
+        await this._service.updateNpwpByNik(request.payload);
+
+        return {
+            status: 'success',
+            message: 'Berhasil update NPWP'
         }
     }
 }

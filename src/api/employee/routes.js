@@ -39,10 +39,33 @@ const routes = (handler) => [
     },
     {
         method: 'PUT',
-        path: '/employee/{nik}',
+        path: '/employee/status/{nik}',
         handler: handler.updateStatusEmployeeByNikHandler,
         options: {
             auth: "employee_jwt",
+        },
+    },
+    {
+        method: 'PUT',
+        path: '/employee/user',
+        handler: handler.updateEmployeeByTokenHandler,
+        options: {
+            auth: "employee_jwt",
+        },
+    },
+    {
+        method: 'PUT',
+        path: '/employee/user/npwp',
+        handler: handler.updateNPWPEmployeeByTokenHandler,
+        options: {
+            auth: "employee_jwt",
+            payload: {
+                allow: "multipart/form-data",
+                multipart: true,
+                output: "stream",
+                maxBytes: 1245000, //1mb
+                timeout: false,
+            },
         },
     },
 ];

@@ -34,7 +34,7 @@ class UserService {
         password
     }) {
         const [user] = await this._pool.query(`
-            SELECT id_user, employees.nik AS nik_employee, password AS hashed_password FROM users
+            SELECT id_user, employees.nik AS nik_employee, password AS hashed_password, status FROM users
             JOIN employees ON employees.nik = users.nik
             WHERE no_hp = :noHp LIMIT 1 
         `, {
@@ -48,8 +48,11 @@ class UserService {
         const {
             id_user,
             nik_employee,
-            hashed_password
+            hashed_password,
+            status,
         } = user[0];
+
+        if (!status) throw new InvariantError('Anda sudah tidak aktif');
 
         const match = await bcrypt.compare(password, hashed_password);
 
@@ -84,6 +87,47 @@ class UserService {
 
         if (data.length < 1) throw new NotFoundError('User is not found');
         if (data[0].role !== 'admin') throw new AuthorizationError('Are you not entitied')
+    }
+
+    async checkPassword(nik, password) {
+        const [data] = await this._pool.query(`SELECT password FROM users WHERE nik = :nik`, {
+            replacements: {
+                nik,
+            }
+        });
+
+        if (data.length < 1) throw new NotFoundError('Akun tidak ada');
+
+        const { password: hashdedPassword } = data[0];
+        console.log(hashdedPassword);
+        console.log(password);
+        const match = await bcrypt.compare(password, hashdedPassword);
+
+        if (!match) throw new AuthenticationError("Password yang anda berikan salah");
+    }
+
+    async changePasswordByNik(nik, { passwordNew, passwordOld }) {
+        await this.checkPassword(nik, passwordOld);
+
+        passwordNew = await bcrypt.hash(passwordNew, 10);
+
+        await this._pool.query(`UPDATE users SET password = :passwordNew WHERE nik = :nik`,
+            {
+                replacements: {
+                    nik, passwordNew
+                }
+            });
+
+        await this.deleteAuthenticationForUpdatePassword(nik);
+    }
+
+    async deleteAuthenticationForUpdatePassword(nik) {
+        await this._pool.query(`DELETE FROM authentications WHERE nik = :nik`,
+            {
+                replacements: {
+                    nik
+                }
+            })
     }
 }
 

@@ -12,7 +12,9 @@ const EmployeeService = require('./services/mysql/EmployeeService')
 const EmployeeValidator = require('./validator/employee');
 
 // User
+const user = require('./api/user');
 const UserService = require('./services/mysql/UserService');
+const UserValidator = require('./validator/user');
 
 // Storage
 const storage = require('./api/storage');
@@ -115,6 +117,13 @@ const init = async () => {
         plugin: storage,
         options: {
             storage: storagePublic,
+        }
+    },
+    {
+        plugin: user,
+        options: {
+            service: userService,
+            validator: UserValidator
         }
     },
     {

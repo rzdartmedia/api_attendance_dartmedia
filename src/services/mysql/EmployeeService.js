@@ -7,6 +7,7 @@ const {
 } = require("../../utils/MapResult");
 const { Employee } = require('../../../models');
 const StringToLikeSearch = require("../../utils/StringToLikeSearch");
+const { col } = require("sequelize");
 
 class EmployeeService {
     constructor() {
@@ -158,8 +159,22 @@ class EmployeeService {
         return result;
     }
 
+    async checkHaveEmployeeByNik(nik) {
+        const [result] = await this._pool.query(`
+            SELECT id_employee FROM employees WHERE nik = nik
+        `, {
+            replacements: {
+                nik,
+            }
+        });
+
+        if (result.length < 1) throw new NotFoundError(`Employee is not found`);
+    }
+
     async updateStatusEmployeeByNik(nik, status) {
-        const [resultUser] = await this._pool.query(`
+        this.checkHaveEmployeeByNik(nik);
+
+        await this._pool.query(`
             UPDATE users SET status = :status WHERE nik = :nik
         `, {
             replacements: {
@@ -167,15 +182,102 @@ class EmployeeService {
             }
         });
 
-        const [resultEmployee] = await this._pool.query(`
+        await this._pool.query(`
             UPDATE employees SET status_employee = :status WHERE nik = :nik
         `, {
             replacements: {
                 nik, status
             }
         });
+    }
 
-        console.log(resultEmployee);
+    async checkUniqueUpdate(nik, column, data, columnName) {
+        const [result] = await this._pool.query(`
+            SELECT id_employee FROM employees WHERE ${column} = :data AND nik != :nik
+        `, {
+            replacements: {
+                nik,
+                data
+            }
+        });
+
+        if (result.length > 0) throw new InvariantError(`${columnName} already owned by another employee`);
+    }
+
+    async updateDataEmployeeByNik({
+        nik,
+        name,
+        position,
+        division,
+        gender,
+        placeOfBirth,
+        dateOfBirth,
+        addressKtp,
+        address,
+        religion,
+        emailPersonal,
+        emailEmployee,
+        ptkp,
+        blood,
+        nameFamily,
+        connectionFamily,
+        noHpFamily,
+        addressFamily,
+        workLocation,
+    }) {
+        await this.checkHaveEmployeeByNik(nik);
+        await this.checkUniqueUpdate(nik, 'email_personal', emailPersonal, 'Email personal');
+        await this.checkUniqueUpdate(nik, 'email_employee', emailEmployee, 'Email employee');
+
+        await Employee.update({
+            name: name,
+            position: position,
+            division: division,
+            gender: gender,
+            place_of_birth: placeOfBirth,
+            date_of_birth: dateOfBirth,
+            address_ktp: addressKtp,
+            address: address,
+            religion: religion,
+            email_personal: emailPersonal,
+            email_employee: emailEmployee,
+            ptkp: ptkp,
+            blood: blood,
+            name_family: nameFamily,
+            connection_family: connectionFamily,
+            no_hp_family: noHpFamily,
+            address_family: addressFamily,
+            work_location: workLocation,
+        }, {
+            where: {
+                nik: nik
+            }
+        });
+    }
+
+    async getImageOneForUpdate(nik, column) {
+        const [result] = await this._pool.query(`
+            SELECT ${column} FROM employees WHERE nik = :nik
+        `, {
+            replacements: {
+                nik: nik
+            }
+        });
+
+        return result[0][column];
+    }
+
+    async updateNpwpByNik({ nik, npwp, photoNpwp }) {
+        await this.checkUniqueUpdate(nik, 'npwp', npwp, 'NPWP');
+
+        await Employee.update({
+            npwp: npwp,
+            photo_npwp: photoNpwp,
+        }, {
+            where: {
+                nik: nik
+            }
+        });
     }
 }
 

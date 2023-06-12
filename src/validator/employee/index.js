@@ -2,6 +2,8 @@ const InvariantError = require("../../exceptions/InvariantError");
 const {
   AddEmployeePayloadSchema,
   putStatusEmployeeByNikPayloadSchema,
+  UpdateEmployeePayloadSchema,
+  UpdateNPWPEmployeePayloadSchema,
   ImageHeaderSchema
 } = require("./schema");
 
@@ -16,9 +18,27 @@ const EmployeeValidator = {
       throw new InvariantError(validationResult.error.message);
     }
   },
-  validatePutStatusEmployeeByNikPayloadPayload: (payload) => {
+  validatePutStatusEmployeeByNikPayload: (payload) => {
     // check type data 
     const validationResult = putStatusEmployeeByNikPayloadSchema.validate(payload);
+
+    // if validation error throw error
+    if (validationResult.error) {
+      throw new InvariantError(validationResult.error.message);
+    }
+  },
+  validateUpdateEmployeeByNikPayload: (payload) => {
+    // check type data 
+    const validationResult = UpdateEmployeePayloadSchema.validate(payload);
+
+    // if validation error throw error
+    if (validationResult.error) {
+      throw new InvariantError(validationResult.error.message);
+    }
+  },
+  validateUpdateNPWPEmployeePayload: (payload) => {
+    // check type data 
+    const validationResult = UpdateNPWPEmployeePayloadSchema.validate(payload);
 
     // if validation error throw error
     if (validationResult.error) {
