@@ -309,28 +309,7 @@ class AttendanceService {
         return result;
     }
 
-    async getCountReportAttendanceByMonth(month, year) {
-        const dataMonth = month || new Date().getMonth() + 1;
-        const dataYear = year || new Date().getFullYear();
-
-        const [data] = await this._pool.query(
-            `SELECT count(*) AS count FROM (SELECT name FROM attendances
-            JOIN employees ON employees.nik = attendances.nik
-            WHERE MONTH(date) = :dataMonth AND YEAR(date) = :dataYear
-            GROUP BY name) AS count
-            `, {
-            replacements: {
-                dataMonth,
-                dataYear
-            }
-        });
-
-        if (data.length < 1) return 0;
-
-        return data[0].count;
-    }
-
-    async getReportAttendanceByMonth({ limit, offset }, month, year) {
+    async getReportAttendanceByMonth(month, year) {
         const dataMonth = month || new Date().getMonth() + 1;
         const dataYear = year || new Date().getFullYear();
 
@@ -339,11 +318,8 @@ class AttendanceService {
             JOIN employees ON employees.nik = attendances.nik
             WHERE MONTH(date) = :dataMonth AND YEAR(date) = :dataYear
             ORDER BY name
-            LIMIT :limit OFFSET :offset
             `, {
             replacements: {
-                limit,
-                offset,
                 dataMonth,
                 dataYear
             }

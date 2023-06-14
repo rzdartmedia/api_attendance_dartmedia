@@ -236,20 +236,13 @@ class AttendanceHandler {
 
         const month = parseInt(request.query.month);
         const year = parseInt(request.query.year);
-        const numRows = await this._service.getCountReportAttendanceByMonth(month, year);
-        const limit = parseInt(request.query.limit) || 10;
-        const page = parseInt(request.query.page) || 1;
-        const totalPages = Math.ceil(numRows / limit);
-        const offset = limit * (page - 1);
-        const attendances = await this._service.getReportAttendanceByMonth({ limit, offset }, month, year);
+        const attendances = await this._service.getReportAttendanceByMonth(month, year);
 
         return {
             status: 'success',
             data: {
                 attendances
-            },
-            totalData: numRows,
-            totalPages: totalPages
+            }
         }
     }
 }
