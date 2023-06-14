@@ -336,6 +336,26 @@ const MapAttendanceDayByMonth = (input, month, year) => {
     return result;
 }
 
+const MapAttendanceDayByMonthForExcel = (data) => {
+    // Fungsi untuk mengubah format data
+    const transformedData = [];
+
+    for (const item of data) {
+        const transformedItem = {
+            name: item.name,
+            total_attendance: item.totalAttendance
+        };
+
+        for (const key in item.attendance) {
+            transformedItem[key] = item.attendance[key];
+        }
+
+        transformedData.push(transformedItem);
+    }
+
+    return transformedData;
+}
+
 module.exports = {
     MapEmployeeByNik,
     MapAttendanceByIdAndNik,
@@ -348,5 +368,6 @@ module.exports = {
     MapAttendanceByMonth,
     MapAttendanceByMonthForTable,
     MapAttendanceByMonth2,
-    MapAttendanceDayByMonth
+    MapAttendanceDayByMonth,
+    MapAttendanceDayByMonthForExcel
 }

@@ -93,6 +93,19 @@ const routes = (handler) => [
             auth: 'employee_jwt',
         },
     },
+    {
+        method: 'GET',
+        path: '/attendance/cms/day-by-month/excel',
+        handler: handler.getExportReportAttendanceByMonthToExcelHandler,
+        options: {
+            auth: 'employee_jwt',
+        },
+    },
+    {
+        method: 'GET',
+        path: '/report-attendance/{filename}',
+        handler: handler.getFileExcelHandler,
+    },
 ];
 
 module.exports = routes;

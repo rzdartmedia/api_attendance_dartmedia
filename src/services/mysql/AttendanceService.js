@@ -2,17 +2,19 @@ const db = require("../../../models");
 const ClientError = require("../../exceptions/ClientError");
 const NotFoundError = require("../../exceptions/NotFoundError");
 const {
-    MapAttendanceByIdAndNik, MapGetAttandances, MapAttendanceById, MapAttendanceByMonth, MapAttendanceByMonthForTable, MapAttendanceByMonth2, MapAttendanceDayByMonth
+    MapAttendanceByIdAndNik, MapGetAttandances, MapAttendanceById, MapAttendanceByMonth, MapAttendanceByMonthForTable, MapAttendanceByMonth2, MapAttendanceDayByMonth, MapAttendanceDayByMonthForExcel
 } = require("../../utils/MapResult");
 const { Attendance } = require('../../../models');
 const InvariantError = require("../../exceptions/InvariantError");
 const LateComparasion = require("../../utils/LateComparasion");
 const WhereGetAttendance = require("../../utils/WhereGetAttendance");
-const { where } = require("sequelize");
+const XLSX = require('xlsx');
+const fs = require("fs");
 
 class AttendanceService {
-    constructor() {
+    constructor(folderPublic) {
         this._pool = db.sequelize;
+        this._folderPublic = folderPublic;
     }
 
     // Absen masuk
@@ -327,7 +329,48 @@ class AttendanceService {
         );
 
         const result = MapAttendanceDayByMonth(data, dataMonth, dataYear)
-        return result;
+        return { result, dataMonth, dataYear };
+    }
+
+    exportToExcelReportAttendanceByMonth(data, nameMonthAndYear) {
+        // Data yang akan diekspor
+        const dataExcel = MapAttendanceDayByMonthForExcel(data);
+
+        // Mengatur urutan kolom
+        const attendanceCount = Object.values(data[0].attendance).length;
+        const columnOrder = ['name', ...Array.from({ length: attendanceCount }, (_, i) => (i + 1).toString()), 'total_attendance'];
+
+        const worksheet = XLSX.utils.json_to_sheet(dataExcel, { header: columnOrder });
+        worksheet['!cols'] = columnOrder.map(col => ({ wch: col.length }));
+
+        // Membuat workbook baru dan menambahkan worksheet
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+
+        // Membuat folder kalau belum ada
+        const folderReportAttendance = 'report-attendance';
+        const folderPerService = `${this._folderPublic}/${folderReportAttendance}`;
+        if (!fs.existsSync(folderPerService)) {
+            fs.mkdirSync(folderPerService, {
+                recursive: true
+            });
+        }
+
+        // Menyimpan workbook sebagai file Excel
+        const filename = `${nameMonthAndYear}-${new Date().getTime()}.xlsx`;
+        XLSX.writeFile(workbook, `${folderPerService}/${filename}`);
+
+        return {
+            link: `${process.env.URL}/${folderReportAttendance}/${filename}`,
+            folder: folderReportAttendance,
+            filename: filename,
+            filePath: `${folderPerService}/${filename}`
+        };
+    }
+
+    generateFilePathExcel(filename) {
+        const filePath = `${this._folderPublic}/report-attendance/${filename}`;
+        return filePath;
     }
 }
 

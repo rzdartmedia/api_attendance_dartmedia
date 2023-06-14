@@ -44,7 +44,7 @@ const init = async () => {
     const userService = new UserService();
     const storageService = new StorageService(storagePublic);
     const authenticationService = new AuthenticationService();
-    const attendanceService = new AttendanceService();
+    const attendanceService = new AttendanceService(storagePublic);
     const permissionService = new PermissionService();
 
     const server = Hapi.server({

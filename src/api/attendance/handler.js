@@ -1,3 +1,7 @@
+const InvariantError = require("../../exceptions/InvariantError");
+const getMountFromNumber = require("../../utils/getMountFromNumber");
+const fs = require("fs");
+
 class AttendanceHandler {
     constructor({
         service,
@@ -20,6 +24,8 @@ class AttendanceHandler {
         this.getAttendanceByMonthHandler = this.getAttendanceByMonthHandler.bind(this);
         this.getAttendanceByMontForTablehHandler = this.getAttendanceByMontForTablehHandler.bind(this);
         this.getReportAttendanceByMonthHandler = this.getReportAttendanceByMonthHandler.bind(this);
+        this.getExportReportAttendanceByMonthToExcelHandler = this.getExportReportAttendanceByMonthToExcelHandler.bind(this);
+        this.getFileExcelHandler = this.getFileExcelHandler.bind(this);
     }
 
     // Absen masuk
@@ -236,14 +242,59 @@ class AttendanceHandler {
 
         const month = parseInt(request.query.month);
         const year = parseInt(request.query.year);
-        const attendances = await this._service.getReportAttendanceByMonth(month, year);
+        const { result } = await this._service.getReportAttendanceByMonth(month, year);
 
         return {
             status: 'success',
             data: {
-                attendances
+                attendances: result
             }
         }
+    }
+
+    async getExportReportAttendanceByMonthToExcelHandler(request) {
+        const {
+            nik
+        } = request.auth.credentials;
+        await this._userService.checkRoleAdmin(nik);
+
+        const month = parseInt(request.query.month);
+        const year = parseInt(request.query.year);
+        const { result, dataMonth, dataYear } = await this._service.getReportAttendanceByMonth(month, year);
+
+        if (result.length < 1) throw new InvariantError('Tidak ada data yang di export')
+
+        const nameMonthAndYear = `Report Attendance-${getMountFromNumber(dataMonth)} ${dataYear}`;
+        const { link } = this._service.exportToExcelReportAttendanceByMonth(result, nameMonthAndYear)
+
+        return {
+            status: 'success',
+            data: {
+                link
+            }
+        };
+    }
+
+    async getFileExcelHandler(request, h) {
+        const filePath = this._service.generateFilePathExcel(request.params.filename)
+        // Membaca file Excel
+        const file = fs.readFileSync(filePath);
+
+        // Mengatur respons sebagai file Excel
+        const response = h.response(file);
+        response.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        response.header('Content-Disposition', `attachment; filename=${request.params.filename}`);
+
+        // Menghapus file setelah dikirim
+        fs.unlink(filePath, (error) => {
+            if (error) {
+                console.error('Gagal menghapus file:', error);
+            } else {
+                console.log('File berhasil dihapus.');
+            }
+        });
+
+        return response;
     }
 }
 
